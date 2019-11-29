@@ -1,5 +1,5 @@
 export default class Eatery {
-  static MAX_SIZE = 3;
+  static MAX_SIZE = 5;
 
   constructor() {
     this.agents = [];
