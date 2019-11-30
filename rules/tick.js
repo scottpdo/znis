@@ -4,10 +4,15 @@ import {
   HOURS_PER_TICK
 } from "../utils/time";
 import { utils } from "flocc";
+import Relationship from "../entities/relationship";
 
-const AMOUNT_TO_EAT = 0.6;
-// eat AMOUNT_TO_EAT in 12 minutes
-const TURNS_TO_EAT = 12 / MINUTES_PER_TICK;
+const HUNGER_GAIN = 0.0002;
+const HUNGER_GAIN_WHILE_SLEEPING = 0.00005;
+const TIRED_GAIN = 0.0001;
+
+const AMOUNT_TO_EAT = 0.7;
+// eat AMOUNT_TO_EAT in 10 minutes
+const TURNS_TO_EAT = 10 / MINUTES_PER_TICK;
 
 // recover fully in 8 hours
 const RATE_OF_REST = (1 / 8) * HOURS_PER_TICK;
@@ -17,6 +22,29 @@ export function attemptToEat(agent) {
   if (eatery.isFull()) return false;
   eatery.addAgent(agent);
   agent.set("eating", 0);
+
+  // when a new agent begins eating, they form a relationship
+  // with agents already at the eatery
+  if (eatery.agents.length > 1) {
+    eatery.agents
+      .filter(a => a !== agent)
+      .forEach(a => {
+        if (
+          !a.get("relationships").get(agent) &&
+          !agent.get("relationships").get(a)
+        ) {
+          const r = new Relationship(agent, a);
+          a.get("relationships").set(agent, r);
+          agent.get("relationships").set(a, r);
+        } else {
+          agent
+            .get("relationships")
+            .get(a)
+            .incrementBoth();
+        }
+      });
+  }
+
   return true;
 }
 
@@ -42,16 +70,19 @@ function wakeUp(agent) {
 }
 
 export default function tick(agent) {
-  if (agent.get("eating") < 0) agent.increment("hunger", 0.0002);
-  if (agent.get("sleeping") < 0) agent.increment("tired", 0.0001);
+  if (agent.get("eating") < 0) {
+    agent.increment(
+      "hunger",
+      agent.get("sleeping") < 0 ? HUNGER_GAIN : HUNGER_GAIN_WHILE_SLEEPING
+    );
+  }
+  if (agent.get("sleeping") < 0) agent.increment("tired", TIRED_GAIN);
 
   const hunger = agent.get("hunger");
   const mightEat = utils.remap(hunger, 0.7, 1, 0, 1) ** 4;
   if (agent.get("auto") && hunger > 0.7 && Math.random() < mightEat) {
     attemptToEat(agent);
-  }
-
-  if (agent.get("eating") >= 0) {
+  } else if (agent.get("eating") >= 0) {
     eat(agent);
   }
 

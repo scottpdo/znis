@@ -1,8 +1,9 @@
 import styled from "styled-components";
-import { Agent, Environment, utils } from "flocc";
+import { Environment, utils } from "flocc";
 import Eatery from "../entities/eatery";
 import tick, { attemptToEat, sleep } from "../rules/tick";
 import time from "../utils/time";
+import SocialAgent from "../entities/agent";
 
 let environment = null;
 
@@ -28,9 +29,16 @@ const Input = styled.input`
   }
 `;
 
-const Panel = styled.div`
+const Column = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+`;
+
+const Panel = styled(Column)`
   border: 1px solid white;
   padding: 20px;
+  width: 320px;
 `;
 
 export default class Index extends React.Component {
@@ -42,7 +50,6 @@ export default class Index extends React.Component {
       actions: [],
       hunger: 0,
       tired: 0,
-      id: null,
       time: "12:00am"
     };
   }
@@ -51,14 +58,7 @@ export default class Index extends React.Component {
     environment = new Environment();
     environment.set("eatery", new Eatery());
     for (let i = 0; i < 100; i++) {
-      const agent = new Agent();
-      agent.set({
-        eating: -1,
-        hunger: utils.random(0, 0.5, true),
-        tired: utils.random(0, 0.5, true),
-        sleeping: -1,
-        auto: true
-      });
+      const agent = new SocialAgent();
       agent.addRule(tick);
       environment.addAgent(agent);
       if (i === 100 - 1) {
@@ -121,27 +121,52 @@ export default class Index extends React.Component {
 
   render() {
     const { actions, hunger, tired, id, time } = this.state;
+    const agent = environment ? environment.getAgentById(id) : null;
+    const status = !agent
+      ? ""
+      : agent.get("eating") >= 0
+      ? "eating"
+      : agent.get("sleeping") >= 0
+      ? "sleeping"
+      : "";
     return (
       <Wrapper>
-        <div>
-          {actions.length > 0 && (
+        <Column>
+          {actions.length > 0 ? (
             <pre style={{ margin: 0 }}>{actions.map(a => a + "\n")}</pre>
+          ) : (
+            <div />
           )}
           <form onSubmit={this.submit}>
             <Input ref={this.inputRef} placeholder="do something" />
           </form>
-        </div>
+        </Column>
         <Panel>
-          {id}
           <div>
+            {agent && agent.get("name") + (status ? ` (${status})` : "")}
+            <br />
             {environment && environment.get("eatery").agents.map(() => "● ")}
             <br />
             Hunger: {hunger.toLocaleString()}
             <br />
             Tired: {tired.toLocaleString()}
             <br />
-            {time}
+            {agent && agent.get("relationships").size > 0 && (
+              <div>
+                Relationships
+                <br />
+                {Array.from(agent.get("relationships").entries()).map(
+                  ([agent, r]) => (
+                    <>
+                      - {agent.get("name")} ({r.atob})
+                      <br />
+                    </>
+                  )
+                )}
+              </div>
+            )}
           </div>
+          {time}
         </Panel>
       </Wrapper>
     );
