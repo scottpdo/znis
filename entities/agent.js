@@ -9,7 +9,7 @@ import Relationship from "./relationship";
 
 const AMOUNT_TO_EAT = 0.7;
 // eat AMOUNT_TO_EAT in 10 minutes
-export const TURNS_TO_EAT = 10 / MINUTES_PER_TICK;
+const TURNS_TO_EAT = 10 / MINUTES_PER_TICK;
 
 // recover fully in 8 hours
 const RATE_OF_REST = (1 / 8) * HOURS_PER_TICK;
@@ -20,7 +20,7 @@ export default class SocialAgent extends Agent {
     this.set({
       eating: -1,
       hunger: utils.random(0, 0.7, true),
-      tired: utils.random(0, 0.5, true),
+      tired: utils.random(0, 0.8, true),
       sleeping: -1,
       auto: true,
       name: names.pop(),
@@ -86,6 +86,8 @@ export default class SocialAgent extends Agent {
     this.increment("sleeping");
     this.decrement("tired", RATE_OF_REST);
     this.set("tired", Math.max(this.get("tired"), 0));
+
+    if (this.get("tired") === 0) this.wakeUp();
   }
 
   wakeUp() {
@@ -96,7 +98,8 @@ export default class SocialAgent extends Agent {
     const relationship = this.get("relationships").get(agent);
     if (!relationship) {
       this.get("relationships").set(agent, new Relationship(this, agent));
+    } else {
+      relationship.incrementBoth();
     }
-    relationship.incrementBoth();
   }
 }

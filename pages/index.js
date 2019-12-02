@@ -1,48 +1,19 @@
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { utils, Histogram } from "flocc";
 import Eatery from "../entities/eatery";
 import tick from "../rules/tick";
 import time from "../utils/time";
 import SocialAgent from "../entities/agent";
 import SocialEnvironment from "../entities/environment";
+import Wrapper from "../ui/wrapper";
+import Input from "../ui/input";
+import Column from "../ui/column";
+import Panel from "../ui/panel";
+import Table from "../components/table";
 
 let log = [];
 
 let environment = null;
-
-const Wrapper = styled.div`
-  background: black;
-  color: white;
-  display: flex;
-  justify-content: space-between;
-  height: 100vh;
-  padding: 20px;
-  width: 100vw;
-`;
-
-const Input = styled.input`
-  appearance: none;
-  background: transparent;
-  color: white;
-  border: none;
-
-  &:focus {
-    border-bottom: 1px solid white;
-    outline: 0;
-  }
-`;
-
-const Column = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-`;
-
-const Panel = styled(Column)`
-  border: 1px solid white;
-  padding: 20px;
-  width: 320px;
-`;
 
 export default class Index extends React.Component {
   inputRef = React.createRef();
@@ -51,8 +22,7 @@ export default class Index extends React.Component {
     super();
     this.state = {
       actions: [],
-      hunger: 0,
-      tired: 0,
+      id: null,
       time: "12:00am"
     };
   }
@@ -69,17 +39,17 @@ export default class Index extends React.Component {
       }
     }
 
-    const container = document.createElement("div");
-    const histogram = new Histogram(environment, {
-      buckets: 10,
-      min: 0,
-      max: 1,
-      aboveMax: true,
-      width: 600
-    });
-    histogram.mount(container);
-    histogram.metric("hunger");
-    document.body.appendChild(container);
+    // const container = document.createElement("div");
+    // const histogram = new Histogram(environment, {
+    //   buckets: 10,
+    //   min: 0,
+    //   max: 1,
+    //   aboveMax: true,
+    //   width: 600
+    // });
+    // histogram.mount(container);
+    // histogram.metric("hunger");
+    // document.body.appendChild(container);
   }
 
   update = () => {
@@ -98,8 +68,6 @@ export default class Index extends React.Component {
     }
     this.setState(
       {
-        hunger,
-        tired,
         time: time(environment)
       },
       () => {
@@ -141,8 +109,14 @@ export default class Index extends React.Component {
       const name = value.slice(8).toLowerCase();
       const other = environment.getAgentByName(name);
       if (other) {
-        agent.talkTo(other);
-        newState.actions.push(`talked to ${name} at ${time}`);
+        if (other.isSleeping()) {
+          newState.actions.push(`${name} is sleeping`);
+        } else {
+          agent.talkTo(other);
+          newState.actions.push(`talked to ${other.get("name")} at ${time}`);
+        }
+      } else {
+        newState.actions.push(`no one named ${name} to talk to`);
       }
     }
     this.setState(newState, () => {
@@ -151,8 +125,11 @@ export default class Index extends React.Component {
   };
 
   render() {
-    const { actions, hunger, tired, id, time } = this.state;
+    const { actions, id, time } = this.state;
     const agent = environment ? environment.getAgentById(id) : null;
+    const hunger = agent ? agent.get("hunger") : null;
+    const tired = agent ? agent.get("tired") : null;
+    const relationships = agent ? agent.get("relationships") : null;
     const status = !agent
       ? ""
       : agent.get("eating") >= 0
@@ -178,27 +155,30 @@ export default class Index extends React.Component {
             <br />
             {environment && environment.get("eatery").agents.map(() => "● ")}
             <br />
-            Hunger: {hunger.toLocaleString()}
+            {agent && `hunger: ${hunger.toLocaleString()}`}
             <br />
-            Tired: {tired.toLocaleString()}
+            {agent && `tired: ${tired.toLocaleString()}`}
             <br />
-            {agent && agent.get("relationships").size > 0 && (
+            {relationships && relationships.size > 0 && (
               <div>
-                Relationships
+                relationships
                 <br />
-                {Array.from(agent.get("relationships").entries()).map(
-                  ([agent, r], i) => (
-                    <div key={i}>
-                      - {agent.get("name")} ({r.atob})
-                      <br />
-                    </div>
-                  )
-                )}
+                {Array.from(relationships.entries()).map(([other, r], i) => (
+                  <div key={i}>
+                    - {other.get("name")} ({r.to(other)})
+                    <br />
+                  </div>
+                ))}
               </div>
             )}
           </div>
           {time}
         </Panel>
+        {environment && (
+          <Panel style={{ width: 600 }}>
+            <Table agents={environment.getAgents()} />
+          </Panel>
+        )}
       </Wrapper>
     );
   }

@@ -18,4 +18,12 @@ export default class Relationship {
     this.incrementA();
     this.incrementB();
   }
+
+  from(agent) {
+    return agent === this.a ? this.atob : agent === this.b ? this.btoa : null;
+  }
+
+  to(agent) {
+    return agent === this.a ? this.btoa : agent === this.b ? this.atob : null;
+  }
 }

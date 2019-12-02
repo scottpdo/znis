@@ -400,4 +400,4 @@ const names = [
   "Zoey"
 ];
 
-export default utils.shuffle(names);
+export default utils.shuffle(names.map(n => n.toLowerCase()));
