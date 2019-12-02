@@ -11,9 +11,9 @@ import Column from "../ui/column";
 import Panel from "../ui/panel";
 import Table from "../components/table";
 
-let log = [];
-
 let environment = null;
+
+let t = new Date();
 
 export default class Index extends React.Component {
   inputRef = React.createRef();
@@ -53,27 +53,13 @@ export default class Index extends React.Component {
   }
 
   update = () => {
+    console.log("time passed", new Date() - t);
+    t = new Date();
     environment.tick({ randomizeOrder: true });
-    const agent = environment.getAgentById(this.state.id);
-    const { hunger, tired } = agent.getData();
-    if (this.state.tired > 0 && tired === 0) {
-      this.setState({
-        actions: this.state.actions.concat("woke up at " + time(environment))
-      });
-    }
-    log.push(environment.get("eatery").agents.length);
-    if (environment.time % 360 === 0) {
-      console.log(time(environment) + ": " + utils.mean(log));
-      log = [];
-    }
-    this.setState(
-      {
-        time: time(environment)
-      },
-      () => {
-        requestAnimationFrame(this.update);
-      }
-    );
+    requestAnimationFrame(this.update);
+    this.setState({
+      time: time(environment)
+    });
   };
 
   submit = e => {
@@ -176,7 +162,7 @@ export default class Index extends React.Component {
         </Panel>
         {environment && (
           <Panel style={{ width: 600 }}>
-            <Table agents={environment.getAgents()} />
+            <Table agentData={environment.getAgents().map(a => a.getData())} />
           </Panel>
         )}
       </Wrapper>

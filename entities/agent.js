@@ -6,6 +6,7 @@ import {
 } from "../utils/time";
 import names from "../data/names";
 import Relationship from "./relationship";
+import interests from "../data/interests";
 
 const AMOUNT_TO_EAT = 0.7;
 // eat AMOUNT_TO_EAT in 10 minutes
@@ -20,6 +21,7 @@ export default class SocialAgent extends Agent {
     this.set({
       eating: -1,
       hunger: utils.random(0, 0.7, true),
+      interests: utils.sample(interests),
       tired: utils.random(0, 0.8, true),
       sleeping: -1,
       auto: true,
