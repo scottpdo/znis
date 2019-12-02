@@ -1,3 +1,4 @@
+import { utils } from "flocc";
 // 20191130060837
 // https://raw.githubusercontent.com/dariusk/corpora/master/data/humans/firstNames.json
 
@@ -399,4 +400,4 @@ const names = [
   "Zoey"
 ];
 
-export default names;
+export default utils.shuffle(names);
