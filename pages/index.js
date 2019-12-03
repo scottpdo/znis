@@ -67,42 +67,25 @@ export default class Index extends React.Component {
     const { id, time } = this.state;
     const { value } = this.inputRef.current;
     const agent = environment.getAgentById(id);
-    const { eating, sleeping } = agent.getData();
     const newState = {
       actions: this.state.actions
     };
     if (value === "eat") {
-      if (sleeping >= 0) {
-        newState.actions.push("can't eat while sleeping");
-      } else {
-        const ableToEat = agent.attemptToEat();
-        if (ableToEat) {
-          newState.actions.push("ate at " + time);
-        } else {
-          newState.actions.push("too crowded to eat at " + time);
-        }
-      }
+      const { message } = agent.attemptToEat();
+      newState.actions.push(message + " [" + time + "]");
     }
     if (value === "sleep") {
-      if (eating === -1) {
-        agent.sleep();
-        newState.actions.push("started sleeping at " + time);
-      } else {
-        newState.actions.push("can't sleep while eating");
-      }
+      const { message } = agent.attemptToSleep();
+      newState.actions.push(message + " [" + time + "]");
     }
     if (value.slice(0, 7) === "talk to") {
       const name = value.slice(8).toLowerCase();
       const other = environment.getAgentByName(name);
       if (other) {
-        if (other.isSleeping()) {
-          newState.actions.push(`${other.get("name")} is sleeping`);
-        } else {
-          agent.talkTo(other);
-          newState.actions.push(`talked to ${other.get("name")} at ${time}`);
-        }
+        const { message } = agent.attemptToTalkTo(other);
+        newState.actions.push(message + " [" + time + "]");
       } else {
-        newState.actions.push(`no one named ${name} to talk to`);
+        newState.actions.push(`no one named ${name}`);
       }
     }
     this.setState(newState, () => {
