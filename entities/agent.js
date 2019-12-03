@@ -1,4 +1,5 @@
 import { Agent, utils } from "flocc";
+import { intersection } from "lodash";
 import {
   SECONDS_PER_TICK,
   MINUTES_PER_TICK,
@@ -21,7 +22,7 @@ export default class SocialAgent extends Agent {
     this.set({
       eating: -1,
       hunger: utils.random(0, 0.7, true),
-      interests: utils.sample(interests),
+      interests: new Array(3).fill(0).map(a => utils.sample(interests)),
       tired: utils.random(0, 0.8, true),
       sleeping: -1,
       auto: true,
@@ -102,6 +103,9 @@ export default class SocialAgent extends Agent {
       this.get("relationships").set(agent, new Relationship(this, agent));
     } else {
       relationship.incrementBoth();
+      intersection(this.get("interests"), agent.get("interests")).forEach(() =>
+        relationship.incrementBoth()
+      );
     }
   }
 }

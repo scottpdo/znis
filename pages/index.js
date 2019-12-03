@@ -53,7 +53,7 @@ export default class Index extends React.Component {
   }
 
   update = () => {
-    console.log("time passed", new Date() - t);
+    // console.log("time passed", new Date() - t);
     t = new Date();
     environment.tick({ randomizeOrder: true });
     requestAnimationFrame(this.update);
@@ -96,7 +96,7 @@ export default class Index extends React.Component {
       const other = environment.getAgentByName(name);
       if (other) {
         if (other.isSleeping()) {
-          newState.actions.push(`${name} is sleeping`);
+          newState.actions.push(`${other.get("name")} is sleeping`);
         } else {
           agent.talkTo(other);
           newState.actions.push(`talked to ${other.get("name")} at ${time}`);
